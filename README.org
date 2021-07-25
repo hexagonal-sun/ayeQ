@@ -1,0 +1,57 @@
+* ~ayeQ~: A toolbox for working with IQ modulation
+This project aims to create a command-line program that allows the creation of
+IQ modulated digital signals from different sources. These files can then be
+plaid back on SDRs or analyzed with other programs. Our goal is to make the
+generation of IQ signals easy for people using the command-line. We currently
+support the following kinds of modulation/synthesis:
+
+ - Amplitude Modulation (AM)
+ - Carrier Synthesis
+
+** Amplitude modulation
+The AM module takes an input sound files, applies AM to it, then interpolates
+the resulting IQ samples. The following options are allowed:
+
+#+begin_example
+  -i,--in-file INPUT_FILE  Input sound file
+  -o,--out-file OUTPUT_FILE
+                           Output IQ file
+  -m,--modulation-index MOD_INDEX
+                           Modulation index, value between 1-100 (default: 100)
+  -u,--upsample-factor UPSAMPLE_FAC
+                           Upsample factor, outSR = inSR * UPSAMPLE_FAC
+                           (default: 10)
+  -c,--cutoff-frequency CUTOFF_FREQ
+                           Cutoff frequency, value in Hz (default: 15000)
+  -t,--transition-width TRANS_WIDTH
+                           Transition width, value in Hz (default: 10000)
+  -h,--help                Show this help text
+
+#+end_example
+
+For example, suppose you wanted to apply AM to ~test.flac~, with an
+interpolation factor of 15, you could use:
+
+#+begin_example
+$ ayeQ am -i ~/test.flac -o ~/out.iq -u 15
+#+end_example
+
+** Carrier Synthesis
+Thie module generates a carrier at baseband for the requested length of time.
+The following options are allowed:
+
+#+begin_example
+  -l,--length LENGTH       Carrier length in seconds
+  -o,--out-file OUTPUT_FILE
+                           Output IQ file
+  -s,--sample-rate SAMPLE_RATE
+                           IQ Sample rate in Hz (default: 1000000)
+  -h,--help                Show this help text
+#+end_example
+
+For example, suppose you wanted to generate a baseband carrier for 10 seconds
+with at a sample rate of 1MHz:
+
+#+begin_example
+$ ayeQ carrier -o ~/out.iq -l 10 -s 1000000
+#+end_example
