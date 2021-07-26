@@ -2,12 +2,15 @@
 
 module Carrier (CarrierOpts(..), run, parseOpts) where
 
-import Data.ByteString.Builder
-import Data.Complex
-import IQ
-import Options.Applicative
-import Render
-import System.IO
+import           Data.ByteString.Builder
+import           Data.Complex
+import           IQ
+import           Options.Applicative
+import           Pipes
+import qualified Pipes.Prelude as P
+import           Render
+import           System.IO
+import Control.Monad (replicateM_)
 
 
 data CarrierOpts = CarrierOpts
@@ -36,8 +39,8 @@ parseOpts = CarrierOpts
             <> help "IQ Sample rate in Hz")
 
 
-synthesize :: Int -> Int -> [IQ]
-synthesize sr length = replicate n sample
+synthesize :: Monad m => Int -> Int -> Producer IQ m ()
+synthesize sr length = replicateM_ n $ yield sample
   where n = sr * length
         sample = 1.0 :+ 0.0
 
@@ -46,9 +49,8 @@ run opts = do
   putStr "Synthesizing Samples ..."
   hFlush stdout
 
-  let samps   = synthesize (sampleRate opts) (carrierLength opts)
-      b       = foldMap renderSample samps
-  f <- openBinaryFile (outputFile opts) WriteMode
-  hPutBuilder f b
-  hClose f
+  withBinaryFile (outputFile opts) WriteMode  $ \f ->
+    runEffect $ synthesize (sampleRate opts) (carrierLength opts)
+            >-> cfileSink f
+
   putStrLn "Done."

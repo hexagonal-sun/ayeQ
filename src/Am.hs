@@ -12,13 +12,11 @@ import qualified Pipes.Prelude as P
 import           Control.Monad
 import qualified Data.Sequence as S
 import           ZeroStuff
+import           Render
 import           Options.Applicative
 import qualified Sound.File.Sndfile as SF
 import qualified Sound.File.Sndfile.Buffer.Vector as SV
 import           System.IO
-
-renderSample :: IQ -> Builder
-renderSample (real :+ imag) = floatLE real <> floatLE real
 
 data AMOptions = AMOptions
   { inputFile :: String
@@ -70,13 +68,6 @@ yieldEvery n = do
   await >>= yield
   yieldEvery n
 
-foldChunk :: (Monad m, Monoid a) => Int -> Pipe a a m ()
-foldChunk n = forever $ go n mempty
-  where go 0 x = yield x
-        go n x = do
-          x' <- await
-          go (n - 1) $ x <> x'
-
 run :: AMOptions -> IO ()
 run opts = do
   (info, Just (aSamps :: SV.Buffer Float)) <- SF.readFile $ inputFile opts
@@ -94,9 +85,7 @@ run opts = do
             >-> modulateAM (modIndex opts)
             >-> zeroStuff (upsample opts)
             >-> F.convolve filterKernel
-            >-> P.map renderSample
-            >-> foldChunk 100
-            >-> P.mapM_  (liftIO . hPutBuilder f)
+            >-> cfileSink f
 
   putStrLn "Done."
 
