@@ -47,7 +47,7 @@ hann n = map (\x -> sin (pi * (fromIntegral x / n')) ** 2) vec
 sinc :: Floating a =>  Int -> Int -> Int -> [a]
 sinc len sr fc = map ((fac *) . sinc') [-(len `div` 2)..(len `div` 2)]
   where sinc' x | x == 0 = 1
-                | otherwise =  let n = fromIntegral x in (sin (fac * n * pi)) / (fac * n * pi)
+                | otherwise =  let n = fromIntegral x in sin (fac * n * pi) / (fac * n * pi)
         fac = 2 * (fromIntegral fc / fromIntegral sr)
 
 lowPass :: Floating a => Int -> FilterOptions -> S.Seq a
