@@ -7,6 +7,7 @@ support the following kinds of modulation/synthesis:
 
  - Amplitude Modulation (AM)
  - Carrier Synthesis
+ - CW (Morse Code)
 
 ** Amplitude modulation
 The AM module takes an input sound files, applies AM to it, then interpolates
@@ -54,4 +55,25 @@ with at a sample rate of 1MHz:
 
 #+begin_example
 $ ayeQ carrier -o ~/out.iq -l 10 -s 1000000
+#+end_example
+
+** CW
+
+This module allows IQ files to be generated that encode textual data with the
+standard more code.  The following options are allowed:
+
+#+begin_example
+  -s,--sample-rate SAMPLE_RATE
+                           Sample rate of the produced IQ file
+  -w,--wpm WPM_RATE        Rate of keying in Words per Minute (default: 25)
+  -t,--in-text INPUT_TEXT  Input text message
+  -o,--out-file OUTPUT_FILE
+                           Output IQ file
+  -h,--help                Show this help text
+#+end_example
+
+For example, suppose you want to generate a CQ call at a sample rate of 600kHz:
+
+#+begin_example
+$ ayeQ cw -o ~/cw.iq -s 600000 -t "cq cq cq de M0MLQ"
 #+end_example
