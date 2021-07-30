@@ -1,4 +1,4 @@
-module ZeroStuff where
+module ZeroStuff (zeroStuff) where
 
 import IQ
 import Data.Complex
