@@ -1,12 +1,14 @@
 module Filter (FilterOptions(..), parseOpts, lowPass, convolve) where
 
-import           Data.List
-import           IQ
-import           Data.Complex
-import           Data.Foldable
 import           Control.Monad.Primitive
 import           Control.Monad.State.Strict
-import qualified Data.Sequence as S
+import           Data.Coerce
+import           Data.Complex
+import qualified Data.Vector.Storable as VS
+import qualified Data.Vector.Storable.Mutable as VSM
+import           Foreign.C.Types
+import           Foreign.Ptr
+import           IQ
 import           Options.Applicative
 import           Pipes
 
@@ -50,18 +52,36 @@ sinc len sr fc = map ((fac *) . sinc') [-(len `div` 2)..(len `div` 2)]
                 | otherwise =  let n = fromIntegral x in sin (fac * n * pi) / (fac * n * pi)
         fac = 2 * (fromIntegral fc / fromIntegral sr)
 
-lowPass :: Floating a => Int -> FilterOptions -> S.Seq a
-lowPass sr opts = S.fromList x
+lowPass :: Int -> FilterOptions -> VS.Vector IQ
+lowPass sr opts = VS.fromList x
   where nTaps = calculateNumTaps sr (transitionWidth opts)
         window = hann nTaps
         x = zipWith (*) window $ sinc nTaps sr (cutoff opts)
 
-convolve :: (Monad m, Floating a) => S.Seq a -> Pipe a a m ()
-convolve kernel = void $ flip runStateT (S.replicate (length kernel) 0.0) $ forever $ do
-  x <- lift await
-  s <- get
-  let s' = S.insertAt 0 x $ S.deleteAt (S.length s - 1) s
-      nextSamp = sum $  S.zipWith (*) s' kernel
-  lift (yield nextSamp)
-  put s'
+convolve :: VS.Vector IQ -> Pipe IQ IQ IO ()
+convolve kernel = do
+  let klen = VS.length kernel
+      bufSz = 1024
+      mkCInt = CInt . fromIntegral
+
+  inBuf <- lift $ VSM.replicate bufSz 0.0
+  outBuf <- lift $ VSM.replicate bufSz 0.0
+  stateBuf <- lift $ VSM.replicate klen (0.0 :+ 0.0 :: IQ)
+
+  forever $ do
+    forM_ [0..bufSz-1] (\i -> do
+      x <- await
+      lift $ VSM.write inBuf i x)
+
+    lift $ VS.unsafeWith (coerce kernel) $ \kBuf ->
+      VSM.unsafeWith (coerce stateBuf) $ \stateBuf ->
+        VSM.unsafeWith (coerce inBuf) $ \inBuf ->
+          VSM.unsafeWith (coerce outBuf) $ \outBuf ->
+            conv_c (mkCInt klen) (mkCInt bufSz) kBuf stateBuf inBuf outBuf
+
+    forM_ [0..bufSz-1] (\i -> do
+      nextSamp <- lift $ VSM.read outBuf i
+      yield nextSamp)
 {-# INLINE convolve #-}
+
+foreign import ccall "convolve" conv_c :: CInt -> CInt -> Ptr CFloat -> Ptr CFloat -> Ptr CFloat -> Ptr CFloat -> IO ()

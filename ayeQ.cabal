@@ -19,6 +19,7 @@ extra-source-files:  CHANGELOG.md
 executable ayeQ
   hs-source-dirs:     src
   main-is:             Main.hs
+  c-sources:           src/filter.c
   other-modules:       Render
                      , IQ
                      , ZeroStuff
