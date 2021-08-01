@@ -8,7 +8,7 @@ static void rotate (int klen, float complex *state)
 
 void convolve(int klen,
               int buflen,
-              const float complex * const kernel,
+              const float * const kernel,
               float complex *state,
               const float complex * const in,
               float complex *out)

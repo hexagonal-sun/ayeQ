@@ -7,7 +7,9 @@ import           Data.Complex
 import qualified Data.Vector.Storable as VS
 import qualified Data.Vector.Storable.Mutable as VSM
 import           Foreign.C.Types
+import           Foreign.ForeignPtr
 import           Foreign.Ptr
+import           Foreign.Storable
 import           IQ
 import           Options.Applicative
 import           Pipes
@@ -52,13 +54,13 @@ sinc len sr fc = map ((fac *) . sinc') [-(len `div` 2)..(len `div` 2)]
                 | otherwise =  let n = fromIntegral x in sin (fac * n * pi) / (fac * n * pi)
         fac = 2 * (fromIntegral fc / fromIntegral sr)
 
-lowPass :: Int -> FilterOptions -> VS.Vector IQ
+lowPass :: Int -> FilterOptions -> VS.Vector Float
 lowPass sr opts = VS.fromList x
   where nTaps = calculateNumTaps sr (transitionWidth opts)
         window = hann nTaps
         x = zipWith (*) window $ sinc nTaps sr (cutoff opts)
 
-convolve :: VS.Vector IQ -> Pipe IQ IQ IO ()
+convolve :: VS.Vector Float -> Pipe IQ IQ IO ()
 convolve kernel = do
   let klen = VS.length kernel
       bufSz = 1024
