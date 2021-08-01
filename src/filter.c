@@ -1,13 +1,21 @@
 #include <complex.h>
 
-static void rotate (int klen, float complex *state)
+static void push(int klen,
+                 float complex val,
+                 float complex *state,
+                 int *headPos)
 {
-    for (int i = klen - 1; i >= 1; i--)
-        state[i] = state [i-1];
+    (*headPos)--;
+
+    if (*headPos == -1)
+        (*headPos) = klen - 1;
+
+    state[*headPos] = val;
 }
 
 void convolve(int klen,
               int buflen,
+              int *headPos,
               const float * const kernel,
               float complex *state,
               const float complex * const in,
@@ -16,11 +24,10 @@ void convolve(int klen,
     for (int sampIdx = 0; sampIdx < buflen; sampIdx++) {
         float complex ret = 0 + 0*I;
 
-        rotate(klen, state);
-        state[0] = in[sampIdx];
+        push (klen, in[sampIdx], state, headPos);
 
         for (int i = 0; i < klen; i++)
-            ret += kernel[i] * state[i];
+            ret += kernel[i] * state[((*headPos) + i) % klen];
 
         out[sampIdx] = ret;
     }

@@ -69,6 +69,8 @@ convolve kernel = do
   inBuf <- lift $ VSM.replicate bufSz 0.0
   outBuf <- lift $ VSM.replicate bufSz 0.0
   stateBuf <- lift $ VSM.replicate klen (0.0 :+ 0.0 :: IQ)
+  stateHeadPos <- lift mallocForeignPtr
+  lift . withForeignPtr stateHeadPos $ flip poke 0
 
   forever $ do
     forM_ [0..bufSz-1] (\i -> do
@@ -79,11 +81,12 @@ convolve kernel = do
       VSM.unsafeWith (coerce stateBuf) $ \stateBuf ->
         VSM.unsafeWith (coerce inBuf) $ \inBuf ->
           VSM.unsafeWith (coerce outBuf) $ \outBuf ->
-            conv_c (mkCInt klen) (mkCInt bufSz) kBuf stateBuf inBuf outBuf
+            withForeignPtr stateHeadPos $ \headPos ->
+              conv_c (mkCInt klen) (mkCInt bufSz) headPos kBuf stateBuf inBuf outBuf
 
     forM_ [0..bufSz-1] (\i -> do
       nextSamp <- lift $ VSM.read outBuf i
       yield nextSamp)
 {-# INLINE convolve #-}
 
-foreign import ccall "convolve" conv_c :: CInt -> CInt -> Ptr CFloat -> Ptr CFloat -> Ptr CFloat -> Ptr CFloat -> IO ()
+foreign import ccall "convolve" conv_c :: CInt -> CInt -> Ptr CInt -> Ptr CFloat -> Ptr CFloat -> Ptr CFloat -> Ptr CFloat -> IO ()
