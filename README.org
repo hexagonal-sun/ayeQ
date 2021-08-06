@@ -8,6 +8,7 @@ support the following kinds of modulation/synthesis:
  - Amplitude Modulation (AM)
  - Carrier Synthesis
  - CW (Morse Code)
+ - Frequency Modulation (FM)
 
 ** Amplitude modulation
 The AM module takes an input sound files, applies AM to it, then interpolates
@@ -76,4 +77,33 @@ For example, suppose you want to generate a CQ call at a sample rate of 600kHz:
 
 #+begin_example
 $ ayeQ cw -o ~/cw.iq -s 600000 -t "cq cq cq de M0MLQ"
+#+end_example
+
+** FM
+
+This module allows IQ files to be generated that moduleate a sound file using
+frequency modulation. The following options are allowed:
+
+#+begin_example
+  -i,--in-file INPUT_FILE  Input sound file
+  -o,--out-file OUTPUT_FILE
+                           Output IQ file
+  -d,--deviation-ratio DEV_RATIO
+                           The raio of max_devation over max_mod_frequency.
+                           (default: 1.0)
+  -u,--upsample-factor UPSAMPLE_FAC
+                           Upsample factor, outSR = inSR * UPSAMPLE_FAC
+                           (default: 10)
+  -c,--cutoff-frequency CUTOFF_FREQ
+                           Cutoff frequency, value in Hz (default: 15000)
+  -t,--transition-width TRANS_WIDTH
+                           Transition width, value in Hz (default: 10000)
+  -h,--help                Show this help text
+#+end_example
+
+For example, suppose you wanted to apply AM to ~test.flac~, with an
+interpolation factor of 15 and a modulation ratio of 0.8, you could use:
+
+#+begin_example
+$ ayeQ fm -i test.flac -u 15 -d 0.8 -o fm.iq
 #+end_example
