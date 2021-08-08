@@ -1,6 +1,5 @@
 module Filter (FilterOptions(..), parseOpts, lowPass, convolve) where
 
-import           Control.Monad.Primitive
 import           Control.Monad.State.Strict
 import           Data.Coerce
 import           Data.Complex

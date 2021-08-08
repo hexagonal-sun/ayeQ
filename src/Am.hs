@@ -10,7 +10,6 @@ import qualified Filter as F
 import           Pipes
 import qualified Pipes.Prelude as P
 import           Control.Monad
-import qualified Data.Sequence as S
 import           ZeroStuff
 import           Render
 import           Options.Applicative
