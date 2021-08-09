@@ -80,7 +80,7 @@ run opts = do
 
   withBinaryFile (outputFile opts) WriteMode  $ \f ->
     runEffect $ V.mapM_ yield sampsVec
-            >-> yieldEvery 2
+            >-> yieldEvery (SF.channels info)
             >-> modulateAM (modIndex opts)
             >-> zeroStuff (upsample opts)
             >-> F.convolve filterKernel
